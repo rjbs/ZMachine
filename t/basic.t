@@ -20,8 +20,8 @@ is_binary(
   "Hello, world.",
 );
 
-my @zchars = $z->bytestring_to_zchars( $ztext );
-my @want   = map hex,
+my @zchars = split //, $z->unpack_zchars( $ztext );
+my @want   = map chr hex,
             qw(04 0D 0A 11 11 14 05 13 00 1C 14 17 11 09 05 12 05 07);
             #      H  e  l  l  o     , __  w  o  r  l  d     .    \n
 
@@ -32,5 +32,9 @@ eq_or_diff(
   \@want,
   "zchars from encoded 'Hello, World.'",
 );
+
+my $text = $z->decode($ztext);
+
+is_binary($text, "Hello, world.\n", q{we round-tripped "Hello, world.\n"!});
 
 done_testing;

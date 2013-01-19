@@ -48,6 +48,47 @@ Z-character bytestrings.  All four forms are represented by Perl strings.
 
 =cut
 
+my %ZSCII_FOR = (
+  "\N{NULL}"   => chr 0x00,
+  "\N{DELETE}" => chr 0x08,
+  "\x0D"       => chr 0x0D,
+  "\N{ESCAPE}" => chr 0x1B,
+
+  (map {; chr $_ => chr $_ } (0x20 .. 0x7E)), # ASCII maps over
+
+  # 0x09B - 0x0FB are the "extra characters" and need Unicode translation table
+  # 0x0FF - 0x3FF are undefined and never (?) used
+);
+
+my %UNICODE_FOR = reverse %ZSCII_FOR;
+
+# We can use these characters below because they all (save for the magic A2-C6)
+# are the same in Unicode/ASCII/ZSCII. -- rjbs, 2013-01-18
+my @DEFAULT_ALPHABET = (
+  'a' .. 'z', # A0
+  'A' .. 'Z', # A1
+  (           # A2
+    \0,     # special: read 2 chars for 10-bit zscii character
+    "\x0D",
+    (0 .. 9),
+    do { no warnings 'qw'; qw[ . , ! ? _ # ' " / \ - : ( ) ] },
+  ),
+);
+
+my %DEFAULT_SHORTCUT = (q{ } => chr(0));
+for my $i (0 .. 2) {
+  my $offset = $i * 26;
+  my $prefix = $i ? chr(0x03 + $i) : '';
+
+  for my $j (0 .. 25) {
+    next if $i == 2 and $j == 0; # that guy is magic! -- rjbs, 2013-01-18
+
+    $DEFAULT_SHORTCUT{ $DEFAULT_ALPHABET[ $offset + $j ] }
+      = $prefix . chr($j + 6);
+  }
+}
+
+
 =method new
 
   my $z = ZSCII::Codec->new;
@@ -126,46 +167,6 @@ sub decode {
   $unicode =~ s/\x0D/\n/g;
 
   return $unicode;
-}
-
-my %ZSCII_FOR = (
-  "\N{NULL}"   => chr 0x00,
-  "\N{DELETE}" => chr 0x08,
-  "\x0D"       => chr 0x0D,
-  "\N{ESCAPE}" => chr 0x1B,
-
-  (map {; chr $_ => chr $_ } (0x20 .. 0x7E)), # ASCII maps over
-
-  # 0x09B - 0x0FB are the "extra characters" and need Unicode translation table
-  # 0x0FF - 0x3FF are undefined and never (?) used
-);
-
-my %UNICODE_FOR = reverse %ZSCII_FOR;
-
-# We can use these characters below because they all (save for the magic A2-C6)
-# are the same in Unicode/ASCII/ZSCII. -- rjbs, 2013-01-18
-my @DEFAULT_ALPHABET = (
-  'a' .. 'z', # A0
-  'A' .. 'Z', # A1
-  (           # A2
-    \0,     # special: read 2 chars for 10-bit zscii character
-    "\x0D",
-    (0 .. 9),
-    do { no warnings 'qw'; qw[ . , ! ? _ # ' " / \ - : ( ) ] },
-  ),
-);
-
-my %DEFAULT_SHORTCUT = (q{ } => chr(0));
-for my $i (0 .. 2) {
-  my $offset = $i * 26;
-  my $prefix = $i ? chr(0x03 + $i) : '';
-
-  for my $j (0 .. 25) {
-    next if $i == 2 and $j == 0; # that guy is magic! -- rjbs, 2013-01-18
-
-    $DEFAULT_SHORTCUT{ $DEFAULT_ALPHABET[ $offset + $j ] }
-      = $prefix . chr($j + 6);
-  }
 }
 
 =method unicode_to_zscii

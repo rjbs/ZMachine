@@ -305,7 +305,11 @@ sub zchars_to_zscii {
       Carp::croak("ten-bit ZSCII encoding segment terminated early")
         unless length $next_two == 2;
 
-      Carp::croak("ten-bit ZSCII encoding not yet supported"); # TODO
+      my $value = ord(substr $next_two, 0, 1) << 5
+                | ord(substr $next_two, 1, 1);
+
+      $text .= chr $value;
+      next;
     }
 
     if ($ord >= 0x06 && $ord <= 0x1F) {

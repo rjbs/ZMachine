@@ -66,18 +66,27 @@ my @DEFAULT_ALPHABET = (
   'a' .. 'z', # A0
   'A' .. 'Z', # A1
   (           # A2
-    \0,     # special: read 2 chars for 10-bit zscii character
+    "\0", # special: read 2 chars for 10-bit zscii character
     "\x0D",
     (0 .. 9),
     do { no warnings 'qw'; qw[ . , ! ? _ # ' " / \ - : ( ) ] },
   ),
 );
 
-sub _shortcuts_for {
+sub _validate_alphabet {
   my (undef, $alphabet) = @_;
 
   Carp::croak("alphabet table was not 78 entries long")
     unless @$alphabet == 78;
+
+  Carp::carp("alphabet character 52 not set to 0x000, " . ord($alphabet->[52]))
+    unless $alphabet->[52] eq chr(0);
+}
+
+sub _shortcuts_for {
+  my ($self, $alphabet) = @_;
+
+  $self->_validate_alphabet($alphabet);
 
   my %shortcut = (q{ } => chr(0));
 

@@ -1,7 +1,7 @@
 package ZSCII::Codec;
 use 5.14.0;
 use warnings;
-# ABSTRACT: an encoder/decoder for ZSCII
+# ABSTRACT: an encoder/decoder for Z-Machine text
 
 use Carp ();
 use charnames ();
@@ -12,26 +12,39 @@ ZSCII::Codec is a class for objects that are encoders/decoders of Z-Machine
 text.  Right now, ZSCII::Codec only implements Version 5, and even that
 partially.  Only the basic three alphabets are supported for encoding and
 decoding.  Three character sequences (i.e., full ten bit ZSCII characters) are
-not yet supported.  Alternate alphabet tables are not yet supported.
+not yet supported.  Alternate alphabet tables are not yet supported, nor are
+abbreviations.
 
 In the future, these will be supported, and it will be possible to map
 characters not found in Unicode.  For example, the ZSCII "sentence space" could
 be mapped to the Unicode "EM SPACE" character.
 
-At present, a text string can be encoded to a packed Z-character string, but
-not to an array of ZSCII values.
+=head2 How Z-Machine Text Works
 
-# Unicode text
-# |        ^
-# v        |
-# ZSCII text
-# |        ^
-# v        |
-# Z-characters
-# |        ^
-# v        |
-# packed Z-characters
+The Z-Machine's text strings are composed of ZSCII characters.  There are 1024
+ZSCII codepoints, although only bottom eight bits worth are ever used.
+Codepoints 0x20 through 0x7E are identical with the same codepoints in ASCII or
+Unicode.
 
+ZSCII codepoints are then encoded as strings of five-bit Z-characters.  The
+most common ZSCII characters, the lowercase English alphabet, can be encoded
+with one Z-character.  Uppercase letters, numbers, and common punctuation
+ZSCII characters require two Z-characters each.  Any other ZSCII character can
+be encoded with four Z-characters.
+
+For storage on disk or in memory, the five-bit Z-characters are packed
+together, three in a word, and laid out in bytestrings.  The last word in a
+string has its top bit set to mark the ending.  When a bytestring would end
+with out enough Z-characters to pack a full word, it is padded.  (ZSCII::Codec
+pads with Z-character 0x05, a shift character.)
+
+Later versions of the Z-machine allow the mapping of ZSCII codepoints to
+Unicode codepoints to be customized.  ZSCII::Codec does not yet support this
+feature.
+
+ZSCII::Codec I<does> allow conversion between all four relevant
+representations:  Unicode text, ZSCII text, Z-character strings, and packed
+Z-character bytestrings.  All four forms are represented by Perl strings.
 
 =cut
 

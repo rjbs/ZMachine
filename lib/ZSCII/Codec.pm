@@ -60,8 +60,6 @@ my %ZSCII_FOR = (
   # 0x0FF - 0x3FF are undefined and never (?) used
 );
 
-my %UNICODE_FOR = reverse %ZSCII_FOR;
-
 # We can use these characters below because they all (save for the magic A2-C6)
 # are the same in Unicode/ASCII/ZSCII. -- rjbs, 2013-01-18
 my @DEFAULT_ALPHABET = (
@@ -75,19 +73,29 @@ my @DEFAULT_ALPHABET = (
   ),
 );
 
-my %DEFAULT_SHORTCUT = (q{ } => chr(0));
-for my $i (0 .. 2) {
-  my $offset = $i * 26;
-  my $prefix = $i ? chr(0x03 + $i) : '';
+sub _shortcuts_for {
+  my (undef, $alphabet) = @_;
 
-  for my $j (0 .. 25) {
-    next if $i == 2 and $j == 0; # that guy is magic! -- rjbs, 2013-01-18
+  Carp::croak("alphabet table was not 78 entries long")
+    unless @$alphabet == 78;
 
-    $DEFAULT_SHORTCUT{ $DEFAULT_ALPHABET[ $offset + $j ] }
-      = $prefix . chr($j + 6);
+  my %shortcut = (q{ } => chr(0));
+
+  for my $i (0 .. 2) {
+    my $offset = $i * 26;
+    my $prefix = $i ? chr(0x03 + $i) : '';
+
+    for my $j (0 .. 25) {
+      next if $i == 2 and $j == 0; # that guy is magic! -- rjbs, 2013-01-18
+
+      $shortcut{ $alphabet->[ $offset + $j ] } = $prefix . chr($j + 6);
+    }
   }
+
+  return \%shortcut;
 }
 
+my %DEFAULT_SHORTCUT = %{ __PACKAGE__->_shortcuts_for( \@DEFAULT_ALPHABET ) };
 
 =method new
 
@@ -115,6 +123,10 @@ sub new {
 
   Carp::croak("only Version 5 ZSCII is supported at present")
     unless $guts->{version} == 5;
+
+  $guts->{alphabet}   = \@DEFAULT_ALPHABET;
+  $guts->{to_zscii}   = \%ZSCII_FOR;
+  $guts->{to_unicode} = { reverse %ZSCII_FOR };
 
   return bless $guts => $class;
 }
@@ -192,7 +204,7 @@ sub unicode_to_zscii {
       sprintf "no ZSCII character available for Unicode U+%v05X <%s>",
         $char,
         charnames::viacode(ord $char),
-    ) unless my $zscii_char = $ZSCII_FOR{ $char };
+    ) unless my $zscii_char = $self->{to_zscii}{ $char };
 
     $zscii .= $zscii_char;
   }
@@ -222,7 +234,7 @@ sub zscii_to_unicode {
 
     Carp::croak(
       sprintf "no Unicode character available for ZSCII %#v05x", $char,
-    ) unless my $unicode_char = $UNICODE_FOR{ $char };
+    ) unless my $unicode_char = $self->{to_unicode}{ $char };
 
     $unicode .= $unicode_char;
   }

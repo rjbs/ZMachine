@@ -48,11 +48,11 @@ Z-character bytestrings.  All four forms are represented by Perl strings.
 
 =cut
 
-my %ZSCII_FOR = (
-  "\N{NULL}"   => chr 0x00,
-  "\N{DELETE}" => chr 0x08,
-  "\x0D"       => chr 0x0D,
-  "\N{ESCAPE}" => chr 0x1B,
+my %DEFAULT_ZSCII = (
+  chr(0x00) => "\N{NULL}",
+  chr(0x08) => "\N{DELETE}",
+  chr(0x0D) => "\x0D",
+  chr(0x1B) => "\N{ESCAPE}",
 
   (map {; chr $_ => chr $_ } (0x20 .. 0x7E)), # ASCII maps over
 
@@ -71,6 +71,16 @@ my @DEFAULT_ALPHABET = (
     (0 .. 9),
     do { no warnings 'qw'; qw[ . , ! ? _ # ' " / \ - : ( ) ] },
   ),
+);
+
+my @DEFAULT_EXTRA = map chr hex, qw(
+  E4 F6 FC C4 D6 DC DF BB       AB EB EF FF CB CF E1 E9
+  ED F3 FA FD C1 C9 CD D3       DA DD E0 E8 EC F2 F9 C0
+  C8 CC D2 D9
+
+  E2 EA EE F4 FB C2 CA CE       D4 DB E5 C5 F8 D8 E3 F1
+  F5 C3 D1 D5 E6 C6 E7 C7       FE F0 DE D0 A3 153 152 A1
+  BF
 );
 
 sub _validate_alphabet {
@@ -121,21 +131,40 @@ a number, it will be used as the version to target.
 sub new {
   my ($class, $arg) = @_;
 
-  my $guts;
   if (! defined $arg) {
-    $guts = { version => 5 };
+    $arg = { version => 5 };
   } if (! ref $arg) {
-    $guts = { version => $arg };
-  } else {
-    $guts = $arg;
+    $arg = { version => $arg };
   }
+
+  my $guts = { version => $arg->{version} };
 
   Carp::croak("only Version 5 ZSCII is supported at present")
     unless $guts->{version} == 5;
 
-  $guts->{alphabet}   = \@DEFAULT_ALPHABET;
-  $guts->{to_zscii}   = \%ZSCII_FOR;
-  $guts->{to_unicode} = { reverse %ZSCII_FOR };
+  $guts->{alphabet}  = $arg->{alphabet} || \@DEFAULT_ALPHABET;
+
+  $guts->{zscii} = { %DEFAULT_ZSCII };
+
+  $guts->{extra} = $arg->{extra_characters}
+                || \@DEFAULT_EXTRA;
+
+  for (0 .. $#{ $guts->{extra} }) {
+    Carp::confess("tried to add ambiguous Z->U mapping")
+      if exists $guts->{zscii}{ chr(155 + $_) };
+
+    $guts->{zscii}{ chr(155 + $_) } = $guts->{extra}[$_];
+  }
+
+  $guts->{zscii_for} = { };
+  for my $zscii_char (sort keys %{ $guts->{zscii} }) {
+    my $unicode_char = $guts->{zscii}{$zscii_char};
+
+    Carp::confess("tried to add ambiguous U->Z mapping")
+      if exists $guts->{zscii_for}{ $unicode_char };
+
+    $guts->{zscii_for}{ $unicode_char } = $zscii_char;
+  }
 
   return bless $guts => $class;
 }
@@ -213,7 +242,7 @@ sub unicode_to_zscii {
       sprintf "no ZSCII character available for Unicode U+%v05X <%s>",
         $char,
         charnames::viacode(ord $char),
-    ) unless my $zscii_char = $self->{to_zscii}{ $char };
+    ) unless my $zscii_char = $self->{zscii_for}{ $char };
 
     $zscii .= $zscii_char;
   }
@@ -243,7 +272,7 @@ sub zscii_to_unicode {
 
     Carp::croak(
       sprintf "no Unicode character available for ZSCII %#v05x", $char,
-    ) unless my $unicode_char = $self->{to_unicode}{ $char };
+    ) unless my $unicode_char = $self->{zscii}{ $char };
 
     $unicode .= $unicode_char;
   }

@@ -131,4 +131,49 @@ is(
   }
 }
 
+{
+  {
+    my $zscii;
+    my $ok = eval { $zscii = $z->unicode_to_zscii("Ameri☭ans"); 1 };
+    ok(! $ok, "we have no HAMMER AND SICKLE by default");
+  }
+
+  my $soviet_z = ZSCII::Codec->new({
+    version => 5,
+    extra_characters => [ qw( Ж ÿ ☭ ) ],
+  });
+
+  my $zscii;
+  my $ok = eval { $zscii = $soviet_z->unicode_to_zscii("Ameri☭ans"); 1 };
+  ok($ok, "we can encode HAMMER AND SICKLE if we make it an extra")
+    or diag "error: $@";
+
+  is(ord(substr($zscii, 5, 1)), 157, "the H&C is ZSCII 157");
+  is(length($zscii), 9, "there are 8 ZSCII charactrs");
+
+  my $zchars = $soviet_z->zscii_to_zchars($zscii);
+
+  my @expected_zchars = (
+    chrs(qw(04 06 12 0A 17 0E)),
+    four_zchars(157),
+    chrs(qw(06 13 18)),
+  );
+
+  is_binary(
+    $zchars,
+    (join q{}, @expected_zchars),
+    "...then the ZSCII to Z-characters",
+  );
+
+  my $zscii_again = $soviet_z->zchars_to_zscii($zchars);
+
+  eq_or_diff($zscii_again, $zscii, "ZSCII->zchars->ZSCII round tripped");
+
+  is(
+    $soviet_z->decode( $soviet_z->encode("Ameri☭ans") ),
+    "Ameri☭ans",
+    "...and we can round trip it",
+  );
+};
+
 done_testing;

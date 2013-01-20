@@ -58,19 +58,19 @@ my $z = ZSCII::Codec->new(5);
   is_binary($text, "Hello, world.\n", q{we round-tripped "Hello, world.\n"!});
 }
 
-is(
-  $z->unicode_to_zscii("\N{LEFT-POINTING DOUBLE ANGLE QUOTATION MARK}"), # «
-  chr(163),
-  "naughty French opening quote: U+00AB, Z+0A3",
-);
+subtest "default extra characters in use" => sub {
+  is(
+    $z->unicode_to_zscii("\N{LEFT-POINTING DOUBLE ANGLE QUOTATION MARK}"), # «
+    chr(163),
+    "naughty French opening quote: U+00AB, Z+0A3",
+  );
 
-is(
-  $z->unicode_to_zscii("\N{RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK}"), # »
-  chr(162),
-  "naughty French opening quote: U+00AB, Z+0A2",
-);
+  is(
+    $z->unicode_to_zscii("\N{RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK}"), # »
+    chr(162),
+    "naughty French opening quote: U+00AB, Z+0A2",
+  );
 
-{
   my $orig    = "«¡Gruß Gott!»";
 
   my $zscii   = $z->unicode_to_zscii( $orig );
@@ -129,7 +129,7 @@ is(
     my $unicode = $z->decode($ztext);
     eq_or_diff($unicode, $orig, "it round trips in isolation, too");
   }
-}
+};
 
 {
   {

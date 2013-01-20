@@ -279,7 +279,7 @@ sub unicode_to_zscii {
       sprintf "no ZSCII character available for Unicode U+%v05X <%s>",
         $char,
         charnames::viacode(ord $char),
-    ) unless my $zscii_char = $self->{zscii_for}{ $char };
+    ) unless defined( my $zscii_char = $self->{zscii_for}{ $char } );
 
     $zscii .= $zscii_char;
   }

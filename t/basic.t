@@ -7,6 +7,24 @@ use Test::Differences;
 use Test::BinaryData;
 use ZSCII::Codec;
 
+sub diag_str {
+  my ($str) = @_;
+  for (0 .. length($str)-1) {
+    my $ord = ord substr($str, $_, 1);
+    diag sprintf("%02s: Z+%03x | %3s", $_, $ord, $ord);
+  }
+}
+
+sub four_zchars {
+  my $chr = shift;
+  my $top = ($chr & 0b1111100000) >> 5;
+  my $bot = ($chr & 0b0000011111);
+
+  return "\x05\x06" . chr($top) . chr($bot);
+}
+
+sub chrs { map chr hex, @_; }
+
 sub bytes {
   return join q{}, map chr hex, @_;
 }
@@ -51,16 +69,6 @@ is(
   chr(162),
   "naughty French opening quote: U+00AB, Z+0A2",
 );
-
-sub four_zchars {
-  my $chr = shift;
-  my $top = ($chr & 0b1111100000) >> 5;
-  my $bot = ($chr & 0b0000011111);
-
-  return "\x05\x06" . chr($top) . chr($bot);
-}
-
-sub chrs { map chr hex, @_; }
 
 {
   my $orig    = "«¡Gruß Gott!»";

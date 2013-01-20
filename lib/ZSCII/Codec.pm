@@ -62,7 +62,7 @@ my %DEFAULT_ZSCII = (
 
 # We can use these characters below because they all (save for the magic A2-C6)
 # are the same in Unicode/ASCII/ZSCII. -- rjbs, 2013-01-18
-my @DEFAULT_ALPHABET = (
+my $DEFAULT_ALPHABET = join(q{},
   'a' .. 'z', # A0
   'A' .. 'Z', # A1
   (           # A2
@@ -87,10 +87,13 @@ sub _validate_alphabet {
   my (undef, $alphabet) = @_;
 
   Carp::croak("alphabet table was not 78 entries long")
-    unless @$alphabet == 78;
+    unless length $alphabet == 78;
 
-  Carp::carp("alphabet character 52 not set to 0x000, " . ord($alphabet->[52]))
-    unless $alphabet->[52] eq chr(0);
+  Carp::carp("alphabet character 52 not set to 0x000")
+    unless substr($alphabet, 52, 1) eq chr(0);
+
+  Carp::croak("alphabet table contains characters over 0xFF")
+    if grep {; ord > 0xFF } split //, $alphabet;
 }
 
 sub _shortcuts_for {
@@ -107,14 +110,12 @@ sub _shortcuts_for {
     for my $j (0 .. 25) {
       next if $i == 2 and $j == 0; # that guy is magic! -- rjbs, 2013-01-18
 
-      $shortcut{ $alphabet->[ $offset + $j ] } = $prefix . chr($j + 6);
+      $shortcut{ substr($alphabet, $offset + $j, 1) } = $prefix . chr($j + 6);
     }
   }
 
   return \%shortcut;
 }
-
-my %DEFAULT_SHORTCUT = %{ __PACKAGE__->_shortcuts_for( \@DEFAULT_ALPHABET ) };
 
 =method new
 
@@ -147,10 +148,20 @@ sub new {
   Carp::croak("only Version 5 ZSCII is supported at present")
     unless $guts->{version} == 5;
 
-  $guts->{alphabet}  = $arg->{alphabet} || \@DEFAULT_ALPHABET;
+  $guts->{alphabet} = $arg->{alphabet} || $DEFAULT_ALPHABET;
+  $guts->{shortcut} = $class->_shortcuts_for( $guts->{alphabet} );
 
   $guts->{zscii} = { %DEFAULT_ZSCII };
 
+  # Why is this an arrayref and not, like alphabets, a string?
+  # Alphabets are strings because they're guaranteed to fit in bytestrings.
+  # You can't put a ZSCII character over 0xFF in the alphabet, because it can't
+  # be put in the story file's alphabet table!  By using a string, it's easy to
+  # just pass in the alphabet from memory to/from the codec.  On the other
+  # hand, the Unicode translation table stores Unicode codepoint values packed
+  # into words, and it's not a good fit for use in the codec.  Maybe a
+  # ZSCII::Util will be useful for packing/unpacking Unicode translation
+  # tables.  It could also verify that there are no astral characters, etc.
   $guts->{extra} = $arg->{extra_characters}
                 || \@DEFAULT_EXTRA;
 
@@ -305,8 +316,8 @@ sub zscii_to_zchars {
   my $zchars = '';
   for (0 .. length($zscii) - 1) {
     my $zscii_char = substr($zscii, $_, 1);
-    if ($DEFAULT_SHORTCUT{ $zscii_char }) {
-      $zchars .= $DEFAULT_SHORTCUT{ $zscii_char };
+    if (defined (my $shortcut = $self->{shortcut}{ $zscii_char })) {
+      $zchars .= $shortcut;
       next;
     }
 
@@ -369,7 +380,7 @@ sub zchars_to_zscii {
     }
 
     if ($ord >= 0x06 && $ord <= 0x1F) {
-      $text .= $self->{alphabet}[ (26 * $alphabet) + $ord - 6 ];
+      $text .= substr $self->{alphabet}, (26 * $alphabet) + $ord - 6, 1;
       $alphabet = 0;
       next;
     }

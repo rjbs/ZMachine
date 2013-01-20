@@ -2,5 +2,18 @@ Release history for ZSCII
 
 {{$NEXT}}
 
+0.002     2013-01-20 13:45:20 America/New_York
+          allow v7 and v8
+
+          implement the four-z-character sequence
+
+          implement extra character support
+
+          implement alternate unicode replacement tables
+
+          add support for custom alphabets
+
+          add make_dict_length to help with dictionary construction
+
 0.001     2013-01-18 23:00:40 America/New_York
           first release

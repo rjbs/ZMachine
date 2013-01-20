@@ -38,7 +38,7 @@ string has its top bit set to mark the ending.  When a bytestring would end
 with out enough Z-characters to pack a full word, it is padded.  (ZSCII::Codec
 pads with Z-character 0x05, a shift character.)
 
-Later versions of the Z-machine allow the mapping of ZSCII codepoints to
+Later versions of the Z-Machine allow the mapping of ZSCII codepoints to
 Unicode codepoints to be customized.  ZSCII::Codec does not yet support this
 feature.
 
@@ -126,11 +126,48 @@ sub _shortcuts_for {
 This returns a new codec.  If the only argument is a number, it is treated as a
 version specification.  If no arguments are given, a Version 5 codec is made.
 
-Valid named arguments are
+Valid named arguments are:
 
-The only valid argument is C<version>, which gives
-the version of Z-machine to target.  The default is 5.  If the only argument is
-a number, it will be used as the version to target.
+=begin :list
+
+= version
+
+The number of the Z-Machine targeted; at present, only 5, 7, or 8 are permitted
+values.
+
+= extra_characters
+
+This is a reference to an array of between 0 and 97 Unicode characters.  These
+will be the characters to which ZSCII characters 155 through 251.  They may not
+duplicate any characters represented by the default ZSCII set.  No Unicode
+codepoint above U+FFFF is permitted, as it would not be representable in the
+Z-Machine Unicode substitution table.
+
+If no extra characters are given, the default table is used.
+
+= alphabet
+
+This is a string of 78 characters, representing the three 26-character
+alphabets used to encode ZSCII compactly into Z-characters.  The first 26
+characters are alphabet 0, for the most common characters.  The rest of the
+characters are alphabets 1 and 2.
+
+No character with a ZSCII value greater than 0xFF may be included in the
+alphabet.  Character 52 (A2's first character) should be NUL.
+
+If no alphabet is given, the default alphabet is used.
+
+= alphabet_is_unicode
+
+By default, the values in the C<alphabet> are assumed to be ZSCII characters,
+so that the contents of the alphabet table from the Z-Machine's memory can be
+used directly.  The C<alphabet_is_unicode> option specifies that the characters
+in the alphabet string are Unicode characters.  They will be converted to ZSCII
+internally by the C<unicode_to_zscii> method, and if characters appear in the
+alphabet that are not in the default ZSCII set or the extra characters, an
+exception will be raised.
+
+=end :list
 
 =cut
 

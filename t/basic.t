@@ -150,6 +150,7 @@ subtest "custom extra characters" => sub {
 
   is(ord(substr($zscii, 5, 1)), 157, "the H&C is ZSCII 157");
   is(length($zscii), 9, "there are 8 ZSCII charactrs");
+  is_binary($zscii, "Ameri\x9Dans", "...and they're what we expect too");
 
   my $zchars = $soviet_z->zscii_to_zchars($zscii);
 

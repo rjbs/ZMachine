@@ -179,6 +179,8 @@ sub new {
     $guts->{zscii_for}{ $unicode_char } = $zscii_char;
   }
 
+  my $self = bless $guts => $class;
+
   # The default alphabet is entirely made up of characters that are the same in
   # Unicode and ZSCII.  If a user wants to put "extra characters" into the
   # alphabet table, though, the alphabet should contain ZSCII values.  When
@@ -187,12 +189,21 @@ sub new {
   # story file, it's less trivial, because we don't want to think about the
   # specific ZSCII codepoints for the Unicode text we'll encode.
   #
-  # We should allow an option to say "my alphabet is supplied in Unicode,
-  # please convert it to ZSCII during construction." -- rjbs, 2013-01-19
-  $guts->{alphabet} = $arg->{alphabet} || $DEFAULT_ALPHABET;
-  $guts->{shortcut} = $class->_shortcuts_for( $guts->{alphabet} );
+  # We provide alphabet_is_unicode to let the user say "my alphabet is supplied
+  # in Unicode, please convert it to ZSCII during construction."
+  # -- rjbs, 2013-01-19
+  my $alphabet = $arg->{alphabet} || $DEFAULT_ALPHABET;
 
-  return bless $guts => $class;
+  # It's okay if the user supplies alphabet_is_unicode but not alphabet,
+  # because the default alphabet is all characters with the same value in both
+  # character sets! -- rjbs, 2013-01-20
+  $alphabet = $self->unicode_to_zscii($alphabet)
+    if $arg->{alphabet_is_unicode};
+
+  $self->{alphabet} = $alphabet;
+  $self->{shortcut} = $class->_shortcuts_for( $self->{alphabet} );
+
+  return $self;
 }
 
 =method encode

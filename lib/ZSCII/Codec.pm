@@ -364,6 +364,7 @@ sub zchars_to_zscii {
                 | ord(substr $next_two, 1, 1);
 
       $text .= chr $value;
+      $alphabet = 0;
       next;
     }
 

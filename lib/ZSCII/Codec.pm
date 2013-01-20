@@ -158,7 +158,7 @@ sub new {
   # hand, the Unicode translation table stores Unicode codepoint values packed
   # into words, and it's not a good fit for use in the codec.  Maybe a
   # ZSCII::Util will be useful for packing/unpacking Unicode translation
-  # tables.  It could also verify that there are no astral characters, etc.
+  # tables.
   $guts->{extra} = $arg->{extra_characters}
                 || \@DEFAULT_EXTRA;
 
@@ -166,7 +166,15 @@ sub new {
     Carp::confess("tried to add ambiguous Z->U mapping")
       if exists $guts->{zscii}{ chr(155 + $_) };
 
-    $guts->{zscii}{ chr(155 + $_) } = $guts->{extra}[$_];
+    my $u_char = $guts->{extra}[$_];
+
+    # Extra characters must go into the Unicode substitution table, which can
+    # only represent characters with codepoints between 0 and 0xFFFF.  See
+    # Z-Machine Spec v1.1 § 3.8.4.2.1
+    Carp::confess("tried to add Unicode codepoint greater than U+FFFF")
+      if ord($u_char) > 0xFFFF;
+
+    $guts->{zscii}{ chr(155 + $_) } = $u_char;
   }
 
   $guts->{zscii_for} = { };

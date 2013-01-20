@@ -145,8 +145,10 @@ sub new {
 
   my $guts = { version => $arg->{version} };
 
-  Carp::croak("only Version 5 ZSCII is supported at present")
-    unless $guts->{version} == 5;
+  Carp::croak("only Version 5, 7, and 8 ZSCII are supported at present")
+    unless $guts->{version} == 5
+        or $guts->{version} == 7
+        or $guts->{version} == 8;
 
   $guts->{zscii} = { %DEFAULT_ZSCII };
 

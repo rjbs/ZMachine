@@ -122,7 +122,12 @@ my %DEFAULT_SHORTCUT = %{ __PACKAGE__->_shortcuts_for( \@DEFAULT_ALPHABET ) };
   my $z = ZSCII::Codec->new(\%arg);
   my $z = ZSCII::Codec->new($version);
 
-This returns a new codec.  The only valid argument is C<version>, which gives
+This returns a new codec.  If the only argument is a number, it is treated as a
+version specification.  If no arguments are given, a Version 5 codec is made.
+
+Valid named arguments are
+
+The only valid argument is C<version>, which gives
 the version of Z-machine to target.  The default is 5.  If the only argument is
 a number, it will be used as the version to target.
 
@@ -305,8 +310,7 @@ sub zscii_to_zchars {
       next;
     }
 
-    $zchars = "\x05\x06"; # The escape code for a ten-bit ZSCII character.
-    my $ord = ord $zscii;
+    my $ord = ord $zscii_char;
 
     if ($ord >= 1024) {
       Carp::croak(
@@ -318,6 +322,7 @@ sub zscii_to_zchars {
     my $top = ($ord & 0b1111100000) >> 5;
     my $bot = ($ord & 0b0000011111);
 
+    $zchars .= "\x05\x06"; # The escape code for a ten-bit ZSCII character.
     $zchars .= chr($top) . chr($bot);
   }
 
@@ -342,19 +347,13 @@ sub zchars_to_zscii {
   my $text = '';
   my $alphabet = 0;
 
-  # We copy to avoid destroying our input.  That's just good manners.
-  # -- rjbs, 2013-01-18
-  while (length $zchars) {
-    my $char = substr $zchars, 0, 1, '';
-
-    last unless defined $char; # needed because of redo below
-
+  while (length( my $char = substr $zchars, 0, 1, '')) {
     my $ord = ord $char;
 
-    if ($ord eq 0) { $text .= q{ }; next; }
+    if ($ord == 0) { $text .= q{ }; next; }
 
-    if    ($ord == 0x04) { $alphabet = 1; redo }
-    elsif ($ord == 0x05) { $alphabet = 2; redo }
+    if    ($ord == 0x04) { $alphabet = 1; next }
+    elsif ($ord == 0x05) { $alphabet = 2; next }
 
     if ($alphabet == 2 && $ord == 0x06) {
       my $next_two = substr $zchars, 0, 2, '';
@@ -369,7 +368,7 @@ sub zchars_to_zscii {
     }
 
     if ($ord >= 0x06 && $ord <= 0x1F) {
-      $text .= $DEFAULT_ALPHABET[ (26 * $alphabet) + $ord - 6 ];
+      $text .= $self->{alphabet}[ (26 * $alphabet) + $ord - 6 ];
       $alphabet = 0;
       next;
     }

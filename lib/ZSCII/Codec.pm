@@ -406,7 +406,7 @@ sub zscii_to_zchars {
 
 =method zchars_to_zscii
 
-  my $zscii = $z->zchars_to_zscii( $zchars_string );
+  my $zscii = $z->zchars_to_zscii( $zchars_string, \%arg );
 
 Given a string of (unpacked) Z-characters, this method will return a string of
 ZSCII characters.
@@ -414,10 +414,23 @@ ZSCII characters.
 It will raise an exception when the right thing to do can't be determined.
 Right now, that could mean lots of things.
 
+Valid arguments are:
+
+=begin :list
+
+= allow_early_termination
+
+If C<allow_early_termination> is true, no exception is thrown if the
+Z-character string ends in the middle of a four z-character sequence.  This is
+useful when dealing with dictionary words.
+
+=end :list
+
 =cut
 
 sub zchars_to_zscii {
-  my ($self, $zchars) = @_;
+  my ($self, $zchars, $arg) = @_;
+  $arg ||= {};
 
   my $text = '';
   my $alphabet = 0;
@@ -432,8 +445,10 @@ sub zchars_to_zscii {
 
     if ($alphabet == 2 && $ord == 0x06) {
       my $next_two = substr $zchars, 0, 2, '';
-      Carp::croak("ten-bit ZSCII encoding segment terminated early")
-        unless length $next_two == 2;
+      if (length $next_two != 2) {
+        last if $arg->{allow_early_termination};
+        Carp::croak("ten-bit ZSCII encoding segment terminated early")
+      }
 
       my $value = ord(substr $next_two, 0, 1) << 5
                 | ord(substr $next_two, 1, 1);
@@ -453,6 +468,30 @@ sub zchars_to_zscii {
   }
 
   return $text;
+}
+
+=method make_dict_length
+
+  my $zchars = $z->make_dict_length( $zchars_string )
+
+This method returns the Z-character string fit to dictionary length for the
+Z-machine version being handled.  It will trim excess characters or pad with
+Z-character 5 to be the right length.
+
+When converting such strings back to ZSCII, you should pass the
+C<allow_early_termination> to C<zchars_to_zscii>, as a four-Z-character
+sequence may have been terminated early.
+
+=cut
+
+sub make_dict_length {
+  my ($self, $zchars) = @_;
+
+  my $length = $self->{version} >= 5 ? 9 : 6;
+  $zchars = substr $zchars, 0, $length;
+  $zchars .= "\x05" x ($length - length($zchars));
+
+  return $zchars;
 }
 
 =method pack_zchars

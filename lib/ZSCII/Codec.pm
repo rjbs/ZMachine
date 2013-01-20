@@ -148,9 +148,6 @@ sub new {
   Carp::croak("only Version 5 ZSCII is supported at present")
     unless $guts->{version} == 5;
 
-  $guts->{alphabet} = $arg->{alphabet} || $DEFAULT_ALPHABET;
-  $guts->{shortcut} = $class->_shortcuts_for( $guts->{alphabet} );
-
   $guts->{zscii} = { %DEFAULT_ZSCII };
 
   # Why is this an arrayref and not, like alphabets, a string?
@@ -181,6 +178,19 @@ sub new {
 
     $guts->{zscii_for}{ $unicode_char } = $zscii_char;
   }
+
+  # The default alphabet is entirely made up of characters that are the same in
+  # Unicode and ZSCII.  If a user wants to put "extra characters" into the
+  # alphabet table, though, the alphabet should contain ZSCII values.  When
+  # we're building a ZSCII::Codec using the contents of the story file's
+  # alphabet table, that's easy.  If we're building a codec to *produce* a
+  # story file, it's less trivial, because we don't want to think about the
+  # specific ZSCII codepoints for the Unicode text we'll encode.
+  #
+  # We should allow an option to say "my alphabet is supplied in Unicode,
+  # please convert it to ZSCII during construction." -- rjbs, 2013-01-19
+  $guts->{alphabet} = $arg->{alphabet} || $DEFAULT_ALPHABET;
+  $guts->{shortcut} = $class->_shortcuts_for( $guts->{alphabet} );
 
   return bless $guts => $class;
 }

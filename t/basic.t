@@ -177,4 +177,45 @@ subtest "custom extra characters" => sub {
   );
 };
 
+for my $test_setup (
+  [ "\x9D", 'ZSCII'   ],
+  [ "☭",    'Unicode' ],
+) {
+  my $a2_19   = $test_setup->[0];
+  my $charset = $test_setup->[1];
+  subtest "custom alphabet, $charset" => sub {
+    my $ussr_z = ZSCII::Codec->new({
+      version  => 5,
+      extra_characters => [ qw( Ж ÿ ☭ ) ],
+      alphabet => "ABCDEFGHIJLKMNOPQRSTUVWXYZ"
+                . "zyxwvutsrqponmlkjihgfedcba"
+                . "\0\x0D0123456789.,!?_#'${a2_19}/\\-:()",
+      alphabet_is_unicode => $charset eq 'Unicode',
+    });
+
+    my $zscii;
+    my $ok = eval { $zscii = $ussr_z->unicode_to_zscii("Ameri☭ans"); 1 };
+    ok($ok, "we can encode HAMMER AND SICKLE if we make it an extra")
+      or diag "error: $@";
+
+    is(ord(substr($zscii, 5, 1)), 157, "the H&C is ZSCII 157");
+    is(length($zscii), 9, "there are 8 ZSCII charactrs");
+    is_binary($zscii, "Ameri\x9Dans", "...and they're what we expect too");
+
+    my $zchars = $ussr_z->zscii_to_zchars($zscii);
+
+    my @expected_zchars = (
+      chrs(qw(06 04 13 04 1B 04 0E 04 17)),
+      chrs(qw(05 19)), # not four_zchars because we put it at A2-19
+      chrs(qw(04 1F 04 12 04 0D)),
+    );
+
+    is_binary(
+      $zchars,
+      (join q{}, @expected_zchars),
+      "...then the ZSCII to Z-characters",
+    );
+  };
+}
+
 done_testing;

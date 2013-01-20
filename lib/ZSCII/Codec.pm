@@ -9,15 +9,8 @@ use charnames ();
 =head1 OVERVIEW
 
 ZSCII::Codec is a class for objects that are encoders/decoders of Z-Machine
-text.  Right now, ZSCII::Codec only implements Version 5, and even that
-partially.  Only the basic three alphabets are supported for encoding and
-decoding.  Three character sequences (i.e., full ten bit ZSCII characters) are
-not yet supported.  Alternate alphabet tables are not yet supported, nor are
-abbreviations.
-
-In the future, these will be supported, and it will be possible to map
-characters not found in Unicode.  For example, the ZSCII "sentence space" could
-be mapped to the Unicode "EM SPACE" character.
+text.  Right now, ZSCII::Codec only implements Version 5 (and thus 7 and 8),
+and even that partially.  There is no abbreviation support yet.
 
 =head2 How Z-Machine Text Works
 

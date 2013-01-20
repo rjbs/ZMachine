@@ -162,6 +162,9 @@ sub new {
   $guts->{extra} = $arg->{extra_characters}
                 || \@DEFAULT_EXTRA;
 
+  Carp::confess("Unicode translation table exceeds maximum length of 97")
+    if @{ $guts->{extra} } > 97;
+
   for (0 .. $#{ $guts->{extra} }) {
     Carp::confess("tried to add ambiguous Z->U mapping")
       if exists $guts->{zscii}{ chr(155 + $_) };

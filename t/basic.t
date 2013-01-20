@@ -131,7 +131,7 @@ subtest "default extra characters in use" => sub {
   }
 };
 
-{
+subtest "custom extra characters" => sub {
   {
     my $zscii;
     my $ok = eval { $zscii = $z->unicode_to_zscii("Ameri☭ans"); 1 };

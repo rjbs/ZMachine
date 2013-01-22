@@ -5,7 +5,7 @@ use utf8;
 use Test::More;
 use Test::Differences;
 use Test::BinaryData;
-use ZSCII::Codec;
+use ZMachine::ZSCII;
 
 sub diag_str {
   my ($str) = @_;
@@ -29,7 +29,7 @@ sub bytes {
   return join q{}, map chr hex, @_;
 }
 
-my $z = ZSCII::Codec->new(5);
+my $z = ZMachine::ZSCII->new(5);
 
 {
   my $ztext = $z->encode("Hello, world.\n");
@@ -138,7 +138,7 @@ subtest "custom extra characters" => sub {
     ok(! $ok, "we have no HAMMER AND SICKLE by default");
   }
 
-  my $soviet_z = ZSCII::Codec->new({
+  my $soviet_z = ZMachine::ZSCII->new({
     version => 5,
     extra_characters => [ qw( Ж ÿ ☭ ) ],
   });
@@ -184,7 +184,7 @@ for my $test_setup (
   my $a2_19   = $test_setup->[0];
   my $charset = $test_setup->[1];
   subtest "custom alphabet, $charset" => sub {
-    my $ussr_z = ZSCII::Codec->new({
+    my $ussr_z = ZMachine::ZSCII->new({
       version  => 5,
       extra_characters => [ qw( Ж ÿ ☭ ) ],
       alphabet => "ABCDEFGHIJLKMNOPQRSTUVWXYZ"

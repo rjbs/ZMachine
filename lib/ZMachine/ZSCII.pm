@@ -1,4 +1,4 @@
-package ZSCII::Codec;
+package ZMachine::ZSCII;
 use 5.14.0;
 use warnings;
 # ABSTRACT: an encoder/decoder for Z-Machine text
@@ -8,8 +8,8 @@ use charnames ();
 
 =head1 OVERVIEW
 
-ZSCII::Codec is a class for objects that are encoders/decoders of Z-Machine
-text.  Right now, ZSCII::Codec only implements Version 5 (and thus 7 and 8),
+ZMachine::ZSCII is a class for objects that are encoders/decoders of Z-Machine
+text.  Right now, ZMachine::ZSCII only implements Version 5 (and thus 7 and 8),
 and even that partially.  There is no abbreviation support yet.
 
 =head2 How Z-Machine Text Works
@@ -28,14 +28,14 @@ be encoded with four Z-characters.
 For storage on disk or in memory, the five-bit Z-characters are packed
 together, three in a word, and laid out in bytestrings.  The last word in a
 string has its top bit set to mark the ending.  When a bytestring would end
-with out enough Z-characters to pack a full word, it is padded.  (ZSCII::Codec
-pads with Z-character 0x05, a shift character.)
+with out enough Z-characters to pack a full word, it is padded.
+(ZMachine::ZSCII pads with Z-character 0x05, a shift character.)
 
 Later versions of the Z-Machine allow the mapping of ZSCII codepoints to
-Unicode codepoints to be customized.  ZSCII::Codec does not yet support this
+Unicode codepoints to be customized.  ZMachine::ZSCII does not yet support this
 feature.
 
-ZSCII::Codec I<does> allow conversion between all four relevant
+ZMachine::ZSCII I<does> allow conversion between all four relevant
 representations:  Unicode text, ZSCII text, Z-character strings, and packed
 Z-character bytestrings.  All four forms are represented by Perl strings.
 
@@ -112,9 +112,9 @@ sub _shortcuts_for {
 
 =method new
 
-  my $z = ZSCII::Codec->new;
-  my $z = ZSCII::Codec->new(\%arg);
-  my $z = ZSCII::Codec->new($version);
+  my $z = ZMachine::ZSCII->new;
+  my $z = ZMachine::ZSCII->new(\%arg);
+  my $z = ZMachine::ZSCII->new($version);
 
 This returns a new codec.  If the only argument is a number, it is treated as a
 version specification.  If no arguments are given, a Version 5 codec is made.
@@ -189,7 +189,7 @@ sub new {
   # just pass in the alphabet from memory to/from the codec.  On the other
   # hand, the Unicode translation table stores Unicode codepoint values packed
   # into words, and it's not a good fit for use in the codec.  Maybe a
-  # ZSCII::Util will be useful for packing/unpacking Unicode translation
+  # ZMachine::Util will be useful for packing/unpacking Unicode translation
   # tables.
   $guts->{extra} = $arg->{extra_characters}
                 || \@DEFAULT_EXTRA;
@@ -227,14 +227,14 @@ sub new {
   # The default alphabet is entirely made up of characters that are the same in
   # Unicode and ZSCII.  If a user wants to put "extra characters" into the
   # alphabet table, though, the alphabet should contain ZSCII values.  When
-  # we're building a ZSCII::Codec using the contents of the story file's
+  # we're building a ZMachine::ZSCII using the contents of the story file's
   # alphabet table, that's easy.  If we're building a codec to *produce* a
   # story file, it's less trivial, because we don't want to think about the
   # specific ZSCII codepoints for the Unicode text we'll encode.
   #
   # We provide alphabet_is_unicode to let the user say "my alphabet is supplied
-  # in Unicode, please convert it to ZSCII during construction."
-  # -- rjbs, 2013-01-19
+  # in Unicode, please convert it to ZSCII during construction." -- rjbs,
+  # 2013-01-19
   my $alphabet = $arg->{alphabet} || $DEFAULT_ALPHABET;
 
   # It's okay if the user supplies alphabet_is_unicode but not alphabet,
@@ -304,7 +304,7 @@ sub decode {
   my $zscii_string = $z->unicode_to_zscii( $unicode_string );
 
 This method converts a Unicode string to a ZSCII string, using the dialect of
-ZSCII for the ZSCII::Codec's configuration.
+ZSCII for the ZMachine::ZSCII's configuration.
 
 If the Unicode input contains any characters that cannot be mapped to ZSCII, an
 exception is raised.
@@ -335,7 +335,7 @@ sub unicode_to_zscii {
   my $unicode_string = $z->zscii_to_unicode( $zscii_string );
 
 This method converts a ZSCII string to a Unicode string, using the dialect of
-ZSCII for the ZSCII::Codec's configuration.
+ZSCII for the ZMachine::ZSCII's configuration.
 
 If the ZSCII input contains any characters that cannot be mapped to Unicode, an
 exception is raised.  I<In the future, it may be possible to request a Unicode

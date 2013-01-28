@@ -1,6 +1,8 @@
 Release history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.003     2013-01-28 09:42:50 America/New_York
           renamed dist from ZSCII to ZMachine for future expansion
 
 0.002     2013-01-20 13:45:20 America/New_York

@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use utf8;
+use charnames ':full';
 
 use Test::More;
 use Test::Differences;

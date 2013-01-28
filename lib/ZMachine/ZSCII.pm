@@ -4,7 +4,7 @@ use warnings;
 # ABSTRACT: an encoder/decoder for Z-Machine text
 
 use Carp ();
-use charnames ();
+use charnames ':full';
 
 =head1 OVERVIEW
 

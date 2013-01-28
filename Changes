@@ -1,7 +1,7 @@
 Release history for {{$dist->name}}
 
 {{$NEXT}}
-          renamed dist to ZMachine for future expansion
+          renamed dist from ZSCII to ZMachine for future expansion
 
 0.002     2013-01-20 13:45:20 America/New_York
           allow v7 and v8

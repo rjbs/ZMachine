@@ -5,7 +5,7 @@ use warnings;
 
 =head1 OVERVIEW
 
-The ZSCII distribution contains libraries for handling data related to
+The ZMachine distribution contains libraries for handling data related to
 Z-Machine programs.
 
 =cut

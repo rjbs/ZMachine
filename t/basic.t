@@ -21,7 +21,7 @@ sub four_zchars {
   my $top = ($chr & 0b1111100000) >> 5;
   my $bot = ($chr & 0b0000011111);
 
-  return "\x05\x06" . chr($top) . chr($bot);
+  return(chr(5), chr(6), chr($top), chr($bot));
 }
 
 sub chrs { map chr hex, @_; }

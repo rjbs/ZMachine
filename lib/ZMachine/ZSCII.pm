@@ -352,7 +352,7 @@ sub zscii_to_unicode {
 
     Carp::croak(
       sprintf "no Unicode character available for ZSCII %#v05x", $char,
-    ) unless my $unicode_char = $self->{zscii}{ $char };
+    ) unless defined(my $unicode_char = $self->{zscii}{ $char });
 
     $unicode .= $unicode_char;
   }

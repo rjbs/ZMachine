@@ -1,6 +1,6 @@
-package ZMachine;
 use strict;
 use warnings;
+package ZMachine;
 # ABSTRACT: libraries for dealing with the Z-Machine
 
 =head1 OVERVIEW

@@ -9,7 +9,7 @@ install:
   - dzil authordeps --missing | cpanm || { cat ~/.cpanm/build.log ; false ; }
   - dzil listdeps --author --missing | cpanm || { cat ~/.cpanm/build.log ; false ; }
 script:
-  - HARNESS_PERL_SWITCHES=-MDevel::Cover=-coverage,statement,branch,condition,path,subroutine dzil test --author --release
+  - HARNESS_PERL_SWITCHES=-MDevel::Cover=-coverage,statement,branch,condition,path,subroutine,-db,$TRAVIS_BUILD_DIR/cover_db dzil test --author --release
   - cover
 after_success:
   - cover -report coveralls

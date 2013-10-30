@@ -4,10 +4,12 @@ perl:
   - 5.16
   - 5.14
 install:
-  - cpanm -nq --installdeps .
   - cpanm -nq Devel::Cover::Report::Coveralls
+  - cpanm Dist::Zilla
+  - dzil authordeps --missing | cpanm || { cat ~/.cpanm/build.log ; false ; }
+  - dzil listdeps --author --missing | cpanm || { cat ~/.cpanm/build.log ; false ; }
 script:
-  - PERL5OPT=-MDevel::Cover=-coverage,statement,branch,condition,path,subroutine dzil test
+  - PERL5OPT=-MDevel::Cover=-coverage,statement,branch,condition,path,subroutine dzil test --author --release
   - cover
 after_success:
   - cover -report coveralls

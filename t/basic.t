@@ -279,4 +279,10 @@ subtest "dictionary words" => sub {
   }
 };
 
+{
+  my $ok = eval { my $fail_z = ZMachine::ZSCII->new(1); 1 };
+  my $err = $@;
+  like($err, qr/only version/i, "no support for v1 (yet?)");
+}
+
 done_testing;

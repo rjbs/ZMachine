@@ -149,7 +149,7 @@ subtest "custom extra characters" => sub {
   ok($ok, "we can encode HAMMER AND SICKLE if we make it an extra")
     or diag "error: $@";
 
-  is(ord(substr($zscii, 5, 1)), 157, "the H&C is ZSCII 157");
+  is(ord(substr($zscii, 5, 1)), 157, "the H&S is ZSCII 157");
   is(length($zscii), 9, "there are 8 ZSCII charactrs");
   is_binary($zscii, "Ameri\x9Dans", "...and they're what we expect too");
 
